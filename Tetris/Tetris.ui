@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>884</width>
-    <height>862</height>
+    <height>866</height>
    </rect>
   </property>
   <property name="font">
@@ -96,7 +96,7 @@
           <item>
            <widget class="QLabel" name="nextLabel">
             <property name="text">
-             <string> </string>
+             <string/>
             </property>
            </widget>
           </item>
@@ -119,20 +119,6 @@
          <widget class="QPushButton" name="startBtn">
           <property name="text">
            <string>Start</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pauseBtn">
-          <property name="text">
-           <string>Pause</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="stopBtn">
-          <property name="text">
-           <string>Stop</string>
           </property>
          </widget>
         </item>

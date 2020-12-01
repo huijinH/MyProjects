@@ -1,15 +1,24 @@
 ﻿#include "Tetris.h"
+#include <QMessageBox>
 #include <QDebug>
 
 Tetris::Tetris(QWidget *parent)
     : QWidget(parent)
 {
     ui.setupUi(this);
+    setFixedSize(880, 860);
+
+    timer = new QTimer;
+    connect(timer, SIGNAL(timeout()), this, SLOT(timerSlot()));
+    timer->setInterval(1000);
+
+    connect(ui.startBtn, SIGNAL(clicked()), this, SLOT(startBtnSlot()));
+
+	step = 40;
+	beginX = 240;
 
     width = ui.gameWidget->width();
     height = ui.gameWidget->height();
-    step = 40;
-    beginX = 240;
     pix = new QPixmap(width, height);
 
 	for (int i = 0; i < 4; i++)
@@ -18,10 +27,8 @@ Tetris::Tetris(QWidget *parent)
 		blockLabel[i]->setFixedSize(step, step);
         blockLabel[i]->setFocus();
 	}
-    shp = ONE;
-    generateBlocks(shp, BLUE);
+
     drawPix();
-    startTimer(1000);
 }
 
 void Tetris::drawPix()
@@ -53,19 +60,18 @@ void Tetris::drawSingleBlock(QLabel* label, QString tip)
     QPixmap* tmpPix = new QPixmap(step, step);
 
     if (tip == "red")
-		tmpPix->fill(Qt::red);
+        tmpPix->fill(Qt::red);
     else if (tip == "blue")
-		tmpPix->fill(Qt::blue);
+        tmpPix->fill(Qt::blue);
     else if (tip == "yellow")
-		tmpPix->fill(Qt::yellow);
+        tmpPix->fill(Qt::yellow);
     else if (tip == "green")
-		tmpPix->fill(Qt::green);
+        tmpPix->fill(Qt::green);
     else if (tip == "gray")
-		tmpPix->fill(Qt::gray);
+        tmpPix->fill(Qt::gray);
+    else if (tip == "black")
+        tmpPix->fill(Qt::black);
 
-    QPen pen;
-    pen.setColor(Qt::red);
-    painter->setPen(pen);
     int x, y;
     x = label->x();
     y = label->y();
@@ -77,6 +83,16 @@ void Tetris::drawSingleBlock(QLabel* label, QString tip)
 
 void Tetris::generateBlocks(Blocks shape, Colors c)
 {
+	for (int c = 0; c < 15; c++)
+	{
+		if (blockArr[0][c] == 1)
+		{
+			QMessageBox::information(this, tr("Failed"), tr("game over"));
+			timer->stop();
+			return;
+		}
+	}
+
     shp = shape;
     switch (shape)
     {
@@ -152,7 +168,43 @@ void Tetris::generateBlocks(Blocks shape, Colors c)
 	}
 }
 
-void Tetris::timerEvent(QTimerEvent* event)
+void Tetris::ifFull()
+{
+    for (int row = 0; row < 19; row++)
+    {
+        bool flag = false;
+        for (int column = 0; column < 15; column++)
+        {
+            if (blockArr[row][column] == 0)
+                flag = true;
+        }
+        if (!flag)
+        {
+            QPixmap pixmap(pix->copy(0, 0, width, row * step));
+			QPainter* painter = new QPainter;
+			QPen pen(Qt::DotLine);
+
+			painter->begin(pix);
+            painter->drawPixmap(0, step, pixmap);
+			painter->end();
+			update();
+
+			painter->begin(pix);
+			pen.setColor(Qt::yellow);
+			painter->setPen(pen);
+			painter->drawLine(QPoint(0, step), QPoint(width, step));
+			painter->end();
+
+            for (int r = row; r >= 1; r--)
+            {
+                for (int c = 0; c < 15; c++)
+                    blockArr[r][c] = blockArr[r - 1][c];
+            }
+        }
+    }
+}
+
+void Tetris::timerSlot()
 {
     int maxY = qMax(qMax(blockLabel[0]->y(), blockLabel[1]->y()), 
                             qMax(blockLabel[2]->y(), blockLabel[3]->y()));
@@ -168,6 +220,7 @@ void Tetris::timerEvent(QTimerEvent* event)
             blockArr[(blockLabel[i]->y()) / step][blockLabel[i]->x() / step] = 1;
             flag[i] = 0;
         }
+        ifFull();
 
 		int shape = qrand() % 5 + 1;
         int c = qrand() % 5 + 1;
@@ -324,11 +377,8 @@ void Tetris::keyPressEvent(QKeyEvent* event)
 				maxY == height - step)
             {
                 for (int i = 0; i < 4; i++)
-                {
-                    drawSingleBlock(blockLabel[i], blockLabel[i]->toolTip());
-                    blockArr[(blockLabel[i]->y()) / step][blockLabel[i]->x() / step] = 1;
                     flag[i] = 0;
-                }
+                ifFull();
                 return;
             }
 
@@ -345,4 +395,31 @@ void Tetris::paintEvent(QPaintEvent* event)
     painter.begin(this);
     painter.drawPixmap(QPoint(ui.gameWidget->x(), ui.gameWidget->y()), *pix);
     painter.end();
+}
+
+void Tetris::startBtnSlot()
+{
+    static bool flag = true, first = true;
+    if (flag)
+    {
+        if (first)
+        {
+			shp = ONE;
+            generateBlocks(shp, BLUE);
+            first = false;
+        }
+
+		for (int i = 0; i < 4; i++)
+			blockLabel[i]->setFocus();
+
+        ui.startBtn->setText(tr("Pause"));
+        flag = false;
+        timer->start();
+    }
+    else
+    {
+        ui.startBtn->setText(tr("Start"));
+        timer->stop();
+        flag = true;
+    }
 }

@@ -4,7 +4,7 @@
 #include "ui_Tetris.h"
 #include <QKeyEvent>
 #include <QPaintEvent>
-#include <QTimerEvent>
+#include <QTimer>
 #include <QPixmap>
 #include <QPainter>
 #include <QPen>
@@ -38,14 +38,18 @@ public:
     void drawPix();
     void drawSingleBlock(QLabel* label, QString tip);
     void generateBlocks(Blocks shape, Colors c);
+	void ifFull();
 
-    void timerEvent(QTimerEvent* event);
     void keyPressEvent(QKeyEvent* event);
     void paintEvent(QPaintEvent* event);
 
+public slots:
+	void timerSlot();
+	void startBtnSlot();
+
 private:
     Ui::TetrisClass ui;
-
+	QTimer* timer;
     QPixmap* pix;
     QLabel* blockLabel[4];
 	Blocks shp;
