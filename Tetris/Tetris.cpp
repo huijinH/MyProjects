@@ -6,7 +6,7 @@ Tetris::Tetris(QWidget *parent)
     : QWidget(parent)
 {
     ui.setupUi(this);
-    setFixedSize(880, 860);
+    setFixedSize(880, 860); 
 
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(timerSlot()));
